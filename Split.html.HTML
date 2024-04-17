@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Percentage Wise Bill Split</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #container {
+            max-width: 600px;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            text-align: left;
+            color: #555;
+        }
+
+        input,
+        button {
+            padding: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .split-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .split-buttons button {
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        #totalAmount {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .table-container {
+            margin-top: 20px;
+        }
+
+        .table-container h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .percentage-input-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .percentage-input-container label {
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .percentage-input-container input {
+            flex: 2;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Hide the percentage-wise split heading initially */
+        #percentageWiseSplitTable h3 {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h2>Percentage Wise Bill Split</h2>
+
+        <label for="destination">Destination Place:</label>
+        <input type="text" id="destination" placeholder="Enter destination">
+
+        <label for="numPersons">Number of Persons:</label>
+        <input type="number" id="numPersons" placeholder="Enter number of persons">
+
+        <div id="namesInput"></div>
+
+        <button onclick="addPurpose()">Add Purpose</button>
+
+        <div id="purposeFields"></div>
+
+        <button onclick="endPurpose()">End of Purpose</button>
+
+        <button onclick="displayEnteredPurposes()">Next</button>
+
+        <div id="expensesTable" class="table-container"></div>
+
+        <div id="totalAmount"></div>
+
+        <div class="split-buttons">
+            <button onclick="equalSplit()">Equal Split</button>
+            <button onclick="percentageWiseSplit()">Percentage Wise Split</button>
+        </div>
+
+        <div id="equalSplitTable" class="table-container"></div>
+
+        <div id="percentageWiseSplitTable" class="table-container">
+            <h3>PERCENTAGE WISE SPLIT</h3>
+        </div>
+    </div>
+
+    <script>
+        let persons = [];
+        let purposes = [];
+        let amounts = [];
+        let destination = "";
+        let numPersons = 0;
+        let totalAmountSpent = 0;
+
+        function addPersonInput() {
+            const namesInput = document.getElementById('namesInput');
+            const personInput = document.createElement('input');
+            personInput.setAttribute('type', 'text');
+            personInput.setAttribute('class', 'personInput');
+            personInput.setAttribute('placeholder', 'Enter name');
+            namesInput.appendChild(personInput);
+        }
+
+        function addPurposeFields() {
+            const purposeFields = document.getElementById('purposeFields');
+            
+            const inputContainer = document.createElement('div');
+            inputContainer.classList.add('input-container');
+
+            const purposeInput = document.createElement('input');
+            purposeInput.setAttribute('type', 'text');
+            purposeInput.setAttribute('placeholder', 'Enter the purpose of amount spent');
+            purposeInput.setAttribute('class', 'purposeInput');
+            inputContainer.appendChild(purposeInput);
+
+            const amountInput = document.createElement('input');
+            amountInput.setAttribute('type', 'number');
+            amountInput.setAttribute('placeholder', 'Enter the total amount spent for the purpose');
+            amountInput.setAttribute('class', 'amountInput');
+            inputContainer.appendChild(amountInput);
+
+            purposeFields.appendChild(inputContainer);
+        }
+
+        function addPurpose() {
+            const namesInput = document.getElementById('namesInput');
+            const personInputs = namesInput.querySelectorAll('.personInput');
+
+            persons = [];
+
+            personInputs.forEach(input => {
+                const name = input.value.trim();
+                if (name) {
+                    persons.push(name);
+                }
+            });
+
+            addPurposeFields();
+        }
+
+        function endPurpose() {
+            const purposeFields = document.getElementById('purposeFields');
+            const inputContainers = purposeFields.querySelectorAll('.input-container');
+
+            purposes = [];
+            amounts = [];
+
+            inputContainers.forEach(container => {
+                const purposeInput = container.querySelector('.purposeInput');
+                const amountInput = container.querySelector('.amountInput');
+
+                const purpose = purposeInput.value.trim();
+                const amount = amountInput.value.trim();
+
+                if (purpose && amount) {
+                    purposes.push(purpose);
+                    amounts.push(parseFloat(amount));
+                }
+            });
+        }
+
+        function displayEnteredInfo() {
+            const totalAmountDiv = document.getElementById('totalAmount');
+            totalAmountDiv.innerHTML = '';
+
+            totalAmountSpent = amounts.reduce((acc, amount) => acc + amount, 0);
+            totalAmountDiv.innerHTML = `<p>Total Amount Spent: ${totalAmountSpent.toFixed(2)}</p>`;
+        }
+
+        function displayEnteredPurposes() {
+            displayEnteredInfo();
+
+            const displayTableContainer = document.getElementById('expensesTable');
+            displayTableContainer.innerHTML = '<h3>EXPENSES</h3>';
+
+            const expensesTable = document.createElement('table');
+            expensesTable.innerHTML = `
+                <tr>
+                    <th>Purpose</th>
+                    <th>Amount Spent</th>
+                </tr>
+            `;
+
+            for (let i = 0; i < purposes.length; i++) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${purposes[i]}</td>
+                    <td>${amounts[i]}</td>
+                `;
+                expensesTable.appendChild(row);
+            }
+
+            displayTableContainer.appendChild(expensesTable);
+            displayTableContainer.appendChild(totalAmountDiv);
+        }
+
+        function equalSplit() {
+            const equalSplitTable = document.getElementById('equalSplitTable');
+            equalSplitTable.innerHTML = '';
+
+            displayEnteredInfo();
+
+            const dividedAmount = totalAmountSpent / persons.length;
+
+            const splitTable = document.createElement('table');
+            splitTable.innerHTML = `
+                <tr>
+                    <th>Person</th>
+                    <th>Divided Amount</th>
+                </tr>
+            `;
+
+            persons.forEach(person => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${person}</td>
+                    <td>${dividedAmount.toFixed(2)}</td>
+                `;
+                splitTable.appendChild(row);
+            });
+
+            equalSplitTable.innerHTML = '<h3>SPLITTING BILL EQUALLY</h3>';
+            equalSplitTable.appendChild(splitTable);
+        }
+
+        function percentageWiseSplit() {
+            const percentageWiseSplitTable = document.getElementById('percentageWiseSplitTable');
+            percentageWiseSplitTable.innerHTML = '';
+
+            // Display heading for Percentage Wise Split
+            const heading = document.createElement('h3');
+            heading.textContent = 'SPLITTING BILL IN PERCENTAGE WISE';
+            percentageWiseSplitTable.appendChild(heading);
+
+            const percentageInputsContainer = document.createElement('div');
+            persons.forEach(person => {
+                const inputContainer = document.createElement('div');
+                inputContainer.classList.add('percentage-input-container');
+
+                const label = document.createElement('label');
+                label.textContent = `${person}:`;
+
+                const input = document.createElement('input');
+                input.setAttribute('type', 'number');
+                input.setAttribute('placeholder', 'Enter percentage');
+                input.setAttribute('class', 'percentageInput');
+
+                inputContainer.appendChild(label);
+                inputContainer.appendChild(input);
+                percentageInputsContainer.appendChild(inputContainer);
+            });
+
+            const calculateButton = document.createElement('button');
+            calculateButton.textContent = 'Calculate Percentage Wise Split';
+            calculateButton.addEventListener('click', calculatePercentageWiseSplit);
+
+            percentageInputsContainer.appendChild(calculateButton);
+            percentageWiseSplitTable.appendChild(percentageInputsContainer);
+
+            // Show the heading after clicking Percentage Wise Split
+            heading.style.display = 'block';
+        }
+
+        function calculatePercentageWiseSplit() {
+            const percentageInputs = document.querySelectorAll('.percentageInput');
+            const percentages = Array.from(percentageInputs).map(input => parseFloat(input.value));
+
+            if (percentages.some(isNaN)) {
+                alert('Please enter valid percentages for each person.');
+                return;
+            }
+
+            const totalPercentage = percentages.reduce((acc, percentage) => acc + percentage, 0);
+
+            if (totalPercentage !== 100) {
+                alert('Total percentage should be 100%. Please adjust the percentages.');
+                return;
+            }
+
+            const percentageWiseSplitTable = document.getElementById('percentageWiseSplitTable');
+            percentageWiseSplitTable.innerHTML = '';
+
+            const splitTable = document.createElement('table');
+            splitTable.innerHTML = `
+                <tr>
+                    <th>Person</th>
+                    <th>Percentage</th>
+                    <th>Share Amount</th>
+                </tr>
+            `;
+
+            persons.forEach((person, index) => {
+                const row = document.createElement('tr');
+                const shareAmount = (percentages[index] / 100) * totalAmountSpent;
+
+                row.innerHTML = `
+                    <td>${person}</td>
+                    <td>${percentages[index]}%</td>
+                    <td>${shareAmount.toFixed(2)}</td>
+                `;
+                splitTable.appendChild(row);
+            });
+
+            percentageWiseSplitTable.appendChild(splitTable);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const numPersonsInput = document.getElementById('numPersons');
+            const destinationInput = document.getElementById('destination');
+
+            numPersonsInput.addEventListener('change', function () {
+                persons = [];
+                const namesInput = document.getElementById('namesInput');
+                namesInput.innerHTML = '';
+
+                for (let i = 0; i < numPersonsInput.value; i++) {
+                    addPersonInput();
+                }
+            });
+
+            destinationInput.addEventListener('input', function () {
+                destination = destinationInput.value;
+            });
+        });
+    </script>
+</body>
+
+</html>
